@@ -37,8 +37,8 @@ class TestRSMNet:
         model.prepare_new_task()  # task 2
         assert model.num_tasks == 3
         assert len(model.heads) == 3
-        # After task 0 (no submatrix) + tasks 1,2 -> 2 submatrices
-        assert model.layers[0].num_submatrices == 2
+        # All 3 tasks get their own submatrix (including task 0)
+        assert model.layers[0].num_submatrices == 3
 
     def test_task_id_selects_head(self, model: RSMNet) -> None:
         model.prepare_new_task()
@@ -50,20 +50,64 @@ class TestRSMNet:
         assert not torch.allclose(out0, out1)
 
     def test_optimizer_has_correct_params(self, model: RSMNet) -> None:
-        model.prepare_new_task()  # task 0: all params
+        model.prepare_new_task()  # task 0: submatrix + query + heads (NOT W_base)
         opt0 = model.get_optimizer(0)
         total_params_t0 = sum(
             p.numel() for group in opt0.param_groups for p in group["params"]
         )
 
-        model.prepare_new_task()  # task 1: only new submatrix + query + heads
+        model.prepare_new_task()  # task 1: same structure
         opt1 = model.get_optimizer(1)
         total_params_t1 = sum(
             p.numel() for group in opt1.param_groups for p in group["params"]
         )
 
-        # Task 1 should have fewer trainable params than task 0
-        assert total_params_t1 < total_params_t0
+        # Both tasks train the same type of params (submatrix + query + heads)
+        # so param count should be similar (same structure)
+        assert total_params_t0 > 0
+        assert total_params_t1 > 0
+
+    def test_w_base_never_in_optimizer(self, model: RSMNet) -> None:
+        model.prepare_new_task()
+        opt = model.get_optimizer(0)
+        opt_param_ids = {id(p) for group in opt.param_groups for p in group["params"]}
+        for layer in model.layers:
+            for p in layer.W_base.parameters():
+                assert id(p) not in opt_param_ids, "W_base should never be in optimizer"
+
+    def test_w_base_frozen_from_task_0(self, model: RSMNet) -> None:
+        model.prepare_new_task()
+        for layer in model.layers:
+            for p in layer.W_base.parameters():
+                assert not p.requires_grad, "W_base should be frozen from task 0"
+
+    def test_base_weights_never_change(self, model: RSMNet) -> None:
+        base_before = {}
+        for name, p in model.named_parameters():
+            if "W_base" in name:
+                base_before[name] = p.data.clone()
+
+        model.prepare_new_task()
+        optimizer = model.get_optimizer(0)
+        x = torch.randn(16, 784)
+        y = torch.randint(0, 10, (16,))
+
+        model.train()
+        for _ in range(10):
+            optimizer.zero_grad()
+            out = model(x)
+            loss = torch.nn.functional.cross_entropy(out, y)
+            loss.backward()
+            optimizer.step()
+
+        for name, p in model.named_parameters():
+            if "W_base" in name:
+                assert torch.equal(base_before[name], p.data), f"W_base changed: {name}"
+
+    def test_task_0_has_submatrix(self, model: RSMNet) -> None:
+        model.prepare_new_task()
+        for layer in model.layers:
+            assert layer.num_submatrices == 1, "Task 0 should have its own submatrix"
 
     def test_gradient_flow_end_to_end(self, model: RSMNet) -> None:
         model.prepare_new_task()
@@ -100,10 +144,11 @@ class TestRSMNet:
         model.prepare_new_task()
         model.prepare_new_task()
 
-        # Set low importance on one submatrix
+        # 3 submatrices per layer -- set one low
         for layer in model.layers:
             layer.importance_scores[0] = 0.001
             layer.importance_scores[1] = 0.5
+            layer.importance_scores[2] = 0.5
 
         pruned = model.prune_all(threshold=0.01)
         assert pruned > 0

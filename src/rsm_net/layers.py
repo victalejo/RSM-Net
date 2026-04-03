@@ -96,6 +96,10 @@ class SubmatrixLinear(nn.Module):
         # Task-to-submatrix mapping (survives pruning)
         self._task_to_submatrix: dict[int, int] = {}
 
+        # EWC-light for query_proj: protect routing without full freeze
+        self._query_fisher: dict[str, Tensor] = {}
+        self._query_optpar: dict[str, Tensor] = {}
+
     @property
     def num_submatrices(self) -> int:
         return len(self.submatrix_A)
@@ -155,14 +159,17 @@ class SubmatrixLinear(nn.Module):
         )
         return k
 
-    def compute_gates(self, x: Tensor) -> Tensor:
+    def compute_gates(self, x: Tensor, context: Optional[Tensor] = None) -> Tensor:
         """
         Compute alpha(x) -- sparse relevance gates for each submatrix.
 
         Uses sparsemax for truly sparse activations (exact zeros).
 
         Args:
-            x: input tensor (batch, in_features)
+            x: input tensor (batch, in_features) -- used if no context
+            context: optional hidden features (batch, feat_dim) for richer
+                     query computation. When provided, query is computed from
+                     context instead of raw x (better task discrimination).
 
         Returns:
             gates: (batch, K) sparse probability distribution,
@@ -172,8 +179,13 @@ class SubmatrixLinear(nn.Module):
         if K == 0:
             return torch.zeros(x.size(0), 0, device=x.device)
 
-        # Query: (batch, key_dim)
-        q = self.query_proj(x)
+        # Single submatrix: gate is trivially 1.0
+        if K == 1:
+            return torch.ones(x.size(0), 1, device=x.device)
+
+        # Query from context (hidden features) or raw input
+        query_input = context if context is not None else x
+        q = self.query_proj(query_input)
 
         # Keys: (K, key_dim)
         keys = torch.stack(list(self.key_embeddings))
@@ -186,10 +198,14 @@ class SubmatrixLinear(nn.Module):
 
         return gates
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, context: Optional[Tensor] = None) -> Tensor:
         """
         Forward pass:
         h = W_base(x) + sum_k alpha_k(x) * A_k @ B_k @ x
+
+        Args:
+            x: input to this layer
+            context: optional hidden features for query computation
         """
         # Base forward
         out = self.W_base(x)
@@ -200,7 +216,7 @@ class SubmatrixLinear(nn.Module):
             return out
 
         # Compute gates once, cache for sparsity loss
-        gates = self.compute_gates(x)
+        gates = self.compute_gates(x, context=context)
         self._last_gates = gates
 
         # Apply submatrices weighted by gates
@@ -323,12 +339,19 @@ class SubmatrixLinear(nn.Module):
         if k < len(self.key_embeddings):
             self.key_embeddings[k].requires_grad = False
 
+    def freeze_query_proj(self) -> None:
+        """Freeze query projection after task 0 establishes the query space."""
+        for param in self.query_proj.parameters():
+            param.requires_grad = False
+
     def get_trainable_params_for_task(self, task_id: int) -> list[nn.Parameter]:
         """Return only the trainable parameters for a specific task."""
         params: list[nn.Parameter] = []
 
-        # Query projection always trains
-        params.extend(self.query_proj.parameters())
+        # Query projection only trains on task 0 (establishes query space)
+        # For subsequent tasks, only key embeddings learn where to route
+        if task_id == 0:
+            params.extend(self.query_proj.parameters())
 
         # Find submatrix index for this task
         sub_idx = self._task_to_submatrix.get(task_id)

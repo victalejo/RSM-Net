@@ -100,7 +100,7 @@ def train_rsm_epoch(
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
 
-        out = model(x)
+        out = model(x, task_id=task_idx)
         loss = F.cross_entropy(out, y)
 
         # Sparsity regularization (uses cached gates, no recomputation)
@@ -128,6 +128,7 @@ def train_baseline_epoch(
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     ewc_lambda: float = 0.0,
+    task_id: int | None = None,
 ) -> tuple[float, float]:
     """Train one epoch of a baseline model."""
     model.train()
@@ -139,7 +140,7 @@ def train_baseline_epoch(
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
 
-        out = model(x)
+        out = model(x, task_id=task_id)
         loss = F.cross_entropy(out, y)
 
         if isinstance(model, EWCNet) and ewc_lambda > 0:
@@ -160,6 +161,7 @@ def run_evaluation(
     model: torch.nn.Module,
     loader: DataLoader,
     device: torch.device,
+    task_id: int | None = None,
 ) -> float:
     """Measure model accuracy on a dataset."""
     model.train(False)
@@ -169,7 +171,7 @@ def run_evaluation(
     with torch.no_grad():
         for x, y in loader:
             x, y = x.to(device), y.to(device)
-            out = model(x)
+            out = model(x, task_id=task_id)
             _, predicted = out.max(1)
             correct += predicted.eq(y).sum().item()
             total += x.size(0)

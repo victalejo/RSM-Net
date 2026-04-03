@@ -40,9 +40,16 @@ class RSMNet(nn.Module):
         self.num_tasks: int = 0
 
         # Build layers
+        # For query computation, layer i uses features from layer i-1 as context.
+        # Layer 0 has no previous layer, so query_proj takes raw input.
+        # Layer i>0: query_proj takes hidden features from layer i-1 (dims[i]).
         dims = [config.input_dim] + list(config.hidden_dims)
         self.layers = nn.ModuleList()
         for i in range(len(dims) - 1):
+            # Context dimension for query: previous layer output (or input for layer 0)
+            # For layer 0: context = raw input (dims[0])
+            # For layer i>0: context = h_{i-1} after ReLU (dims[i])
+            # Both cases: context_dim = dims[i] = in_features for that layer
             self.layers.append(
                 SubmatrixLinear(
                     in_features=dims[i],
@@ -70,8 +77,12 @@ class RSMNet(nn.Module):
         """
         h = x.view(x.size(0), -1)
 
-        for layer in self.layers:
-            h = F.relu(layer(h))
+        for i, layer in enumerate(self.layers):
+            # Layer 0: no context (uses raw input for query)
+            # Layer i>0: uses previous hidden state as context for richer queries
+            # This gives the gating mechanism semantic features to discriminate tasks
+            context = h if i > 0 else None
+            h = F.relu(layer(h, context=context))
 
         if task_id is not None and task_id < len(self.heads):
             return self.heads[task_id](h)
@@ -81,21 +92,25 @@ class RSMNet(nn.Module):
         """
         Prepare the network for a new task.
 
-        - For task 0: train everything normally
-        - For task k>0: freeze base + old submatrices, add new submatrix
+        W_base is ALWAYS frozen (never trained directly).
+        Every task (including task 0) gets its own submatrix.
+        Previous submatrices are frozen before adding the new one.
 
         Returns the task index.
         """
         task_idx = self.num_tasks
 
-        if task_idx > 0:
-            for layer in self.layers:
-                layer.freeze_base()
-                # Freeze all existing submatrices
-                for k in range(layer.num_submatrices):
-                    layer.freeze_submatrix(k)
-                # Add new submatrix for this task
-                layer.add_submatrix(task_id=task_idx)
+        for layer in self.layers:
+            # W_base is always frozen -- knowledge lives in submatrices only
+            layer.freeze_base()
+            # Freeze query_proj after task 0 (stabilizes routing)
+            if task_idx > 0:
+                layer.freeze_query_proj()
+            # Freeze all existing submatrices from previous tasks
+            for k in range(layer.num_submatrices):
+                layer.freeze_submatrix(k)
+            # Add new submatrix for this task
+            layer.add_submatrix(task_id=task_idx)
 
         # Add classification head
         last_hidden = self.layers[-1].out_features
@@ -123,13 +138,12 @@ class RSMNet(nn.Module):
 
         params: list[nn.Parameter] = []
 
-        if task_idx == 0:
-            params = [p for p in self.parameters() if p.requires_grad]
-        else:
-            for layer in self.layers:
-                params.extend(layer.get_trainable_params_for_task(task_idx))
-            params.extend(self.heads[task_idx].parameters())
-            params.extend(self.shared_head.parameters())
+        # All tasks (including task 0) train only their submatrix + query + heads
+        # W_base is NEVER in the optimizer
+        for layer in self.layers:
+            params.extend(layer.get_trainable_params_for_task(task_idx))
+        params.extend(self.heads[task_idx].parameters())
+        params.extend(self.shared_head.parameters())
 
         # Deduplicate (query_proj params may appear multiple times)
         seen_ids: set[int] = set()
