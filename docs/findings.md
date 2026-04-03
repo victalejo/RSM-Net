@@ -146,3 +146,78 @@ different domains, not within a single domain.
 7. **Multi-seed statistical significance.** Current results use seed=42 only.
    Running with seeds {42, 123, 456} and reporting mean +/- std would
    strengthen the experimental claims.
+
+## 8. Ablation Analysis
+
+Source: `results/ablation.json`
+
+### Results Table
+
+**MNIST-Family:**
+
+| Variant | Avg Acc | Forgetting | d Acc | d Forgetting |
+|---|---|---|---|---|
+| full (control) | 73.56% | 0.286 | -- | -- |
+| no_prune | 73.56% | 0.286 | +0.00 | +0.000 |
+| softmax | 73.76% | 0.282 | +0.20 | -0.004 |
+| rank_4 | **75.41%** | **0.228** | **+1.85** | **-0.059** |
+| rank_32 | 65.95% | 0.407 | -7.61 | +0.121 |
+| depth_2 | 68.66% | 0.360 | -4.90 | +0.074 |
+
+**Multi-Domain:**
+
+| Variant | Avg Acc | Forgetting | d Acc | d Forgetting |
+|---|---|---|---|---|
+| full (control) | 58.66% | 0.193 | -- | -- |
+| no_prune | 58.66% | 0.193 | +0.00 | +0.000 |
+| softmax | 58.47% | 0.195 | -0.19 | +0.002 |
+| rank_4 | 58.21% | **0.134** | -0.45 | **-0.059** |
+| rank_32 | **59.02%** | 0.208 | **+0.36** | +0.016 |
+| depth_2 | 60.32% | 0.167 | +1.66 | -0.026 |
+
+### Key Findings
+
+**1. Pruning has zero effect (no_prune = full).**
+With only 3 tasks and 2 submatrices, no submatrix falls below the importance
+threshold. Pruning would matter with 10+ tasks where some submatrices become
+redundant. This is expected and validates the implementation (pruning only
+activates when needed).
+
+**2. Sparsemax vs softmax: negligible difference.**
+softmax achieves nearly identical results to sparsemax on both benchmarks
+(within 0.2% accuracy, 0.004 forgetting). This is the strongest evidence
+for the load distribution hypothesis: the protection mechanism is NOT sparse
+routing (only activating one submatrix), but the modular structure itself.
+Whether gates are sparse or distributed doesn't matter because the gates
+don't discriminate per task anyway.
+
+**3. rank=4 is the sweet spot for MNIST-Family.**
+Lower rank = better generalization + less forgetting (75.41% vs 73.56%,
+forgetting 0.228 vs 0.286). This is counter-intuitive but explainable:
+smaller submatrices have less capacity to overfit to the current task,
+which reduces interference with representations from previous tasks.
+The LoRA literature (Hu et al. 2021) also found that very low rank
+(r=1-4) often works best.
+
+**4. rank=32 hurts on MNIST-Family, helps slightly on Multi-Domain.**
+Too much capacity per submatrix (rank=32) causes more forgetting on
+similar tasks (MNIST-Family: 0.407 vs 0.286). On multi-domain, where
+tasks are very different, the extra capacity helps marginally (59.02%
+vs 58.66%). Trade-off: capacity helps when tasks are dissimilar,
+hurts when tasks are similar.
+
+**5. Recursive depth=2 hurts on MNIST-Family, helps on Multi-Domain.**
+MNIST-Family: depth=2 drops accuracy by 4.9% and increases forgetting by 0.074.
+Multi-Domain: depth=2 improves accuracy by 1.66% and reduces forgetting by 0.026.
+Interpretation: recursive submatrices add useful hierarchical capacity for
+truly different domains, but are unnecessary overhead for similar tasks.
+With only 2 submatrices, the child submatrices double the parameter count
+without adding proportional value for intra-domain benchmarks.
+
+### Recommendations
+
+Based on the ablation:
+- **Default rank=4-8** instead of 16 for most applications
+- **Skip sparsemax** (use softmax) unless sparse inference speed matters
+- **Use depth=2 only** when tasks span very different domains
+- **Pruning is a no-op** with few tasks; keep it for long task sequences
