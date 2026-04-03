@@ -108,20 +108,45 @@ class SubmatrixLinear(nn.Module):
     def num_submatrices(self) -> int:
         return len(self.submatrix_A)
 
+    def _init_orthogonal_key(self) -> Tensor:
+        """
+        Initialize a key embedding orthogonal to all existing keys
+        using Gram-Schmidt. First key is random normalized.
+        """
+        K = len(self.key_embeddings)
+        if K == 0:
+            # First key: random unit vector
+            v = torch.randn(self.key_dim)
+            return v / v.norm().clamp(min=1e-8)
+
+        # Gram-Schmidt: start with random, subtract projections onto existing keys
+        v = torch.randn(self.key_dim)
+        with torch.no_grad():
+            for existing_key in self.key_embeddings:
+                e = existing_key.data
+                proj = (v @ e) / (e @ e).clamp(min=1e-8) * e
+                v = v - proj
+        # Normalize
+        norm = v.norm()
+        if norm < 1e-6:
+            # Degenerate case: random fallback
+            v = torch.randn(self.key_dim)
+        return v / v.norm().clamp(min=1e-8)
+
     def add_submatrix(self, task_id: int) -> int:
         """
         Add a new submatrix for a new task.
 
-        Uses LoRA-style init: A=random(small), B=zeros
-        so A @ B = 0 initially (no perturbation to base weights),
-        but A receives gradient signal from the start.
+        Uses LoRA-style init: A=random(small), B=zeros.
+        Key embedding initialized orthogonal to existing keys (Gram-Schmidt).
         """
         k = len(self.submatrix_A)
 
         # LoRA-style initialization: A random, B zero
         A = nn.Parameter(torch.randn(self.out_features, self.rank) * 0.01)
         B = nn.Parameter(torch.zeros(self.rank, self.in_features))
-        key = nn.Parameter(torch.randn(self.key_dim) * 0.1)
+        # Orthogonal key initialization
+        key = nn.Parameter(self._init_orthogonal_key())
 
         self.submatrix_A.append(A)
         self.submatrix_B.append(B)
@@ -386,8 +411,8 @@ class SubmatrixLinear(nn.Module):
         """Return only the trainable parameters for a specific task."""
         params: list[nn.Parameter] = []
 
-        # Query projection trains on ALL tasks (with EWC protection)
-        params.extend(self.query_proj.parameters())
+        # query_proj only trains on task 0 (frozen after, no EWC needed)
+        # Not included for task_id > 0
 
         # Find submatrix index for this task
         sub_idx = self._task_to_submatrix.get(task_id)

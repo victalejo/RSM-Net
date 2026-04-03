@@ -104,14 +104,13 @@ class RSMNet(nn.Module):
             pass
         else:
             for layer in self.layers:
-                # Freeze W_base after task 0 trained it with semantic features
+                # Freeze W_base and query_proj after task 0
                 layer.freeze_base()
-                # Store Fisher for query_proj EWC protection
-                layer.store_query_fisher()
+                layer.freeze_query_proj()
                 # Freeze all existing submatrices from previous tasks
                 for k in range(layer.num_submatrices):
                     layer.freeze_submatrix(k)
-                # Add new submatrix for this task
+                # Add new submatrix (key initialized orthogonal to existing)
                 layer.add_submatrix(task_id=task_idx)
 
         # Add classification head

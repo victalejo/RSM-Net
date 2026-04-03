@@ -111,10 +111,6 @@ def train_rsm_epoch(
         if config.frobenius_lambda > 0:
             loss = loss + config.frobenius_lambda * model.get_frobenius_loss(task_idx)
 
-        # EWC-light on query_proj (protects routing without full freeze)
-        if config.query_ewc_lambda > 0 and task_idx > 0:
-            loss = loss + model.get_query_ewc_loss(config.query_ewc_lambda)
-
         # Contrastive key loss (pushes key embeddings apart)
         if config.contrastive_lambda > 0:
             loss = loss + config.contrastive_lambda * model.get_contrastive_key_loss()

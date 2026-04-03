@@ -111,12 +111,10 @@ class TestSubmatrixLinear:
     def test_get_trainable_params_for_task(self, layer: SubmatrixLinear) -> None:
         layer.add_submatrix(task_id=0)
         layer.add_submatrix(task_id=1)
-        # All tasks: query_proj (weight + bias) + A + B + key = 5 params
-        # query_proj is trainable for all tasks (protected by EWC-light)
-        params_t0 = layer.get_trainable_params_for_task(task_id=0)
-        assert len(params_t0) == 5
+        # Task 0 not used via get_trainable_params (task 0 uses all params)
+        # Task 1+: only A + B + key = 3 params (query_proj frozen)
         params_t1 = layer.get_trainable_params_for_task(task_id=1)
-        assert len(params_t1) == 5
+        assert len(params_t1) == 3
 
     def test_importance_tracking(self, layer: SubmatrixLinear) -> None:
         layer.add_submatrix(task_id=0)
