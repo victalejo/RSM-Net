@@ -25,8 +25,10 @@ class NaiveFineTuneNet(nn.Module):
         input_dim: int = 784,
         hidden_dims: tuple[int, ...] = (256, 128),
         num_classes: int = 10,
+        encoder: Optional[nn.Module] = None,
     ) -> None:
         super().__init__()
+        self.encoder = encoder
         layers: list[nn.Module] = []
         dims = [input_dim] + list(hidden_dims)
         for i in range(len(dims) - 1):
@@ -41,7 +43,11 @@ class NaiveFineTuneNet(nn.Module):
         self.task_heads.append(nn.Linear(self._last_hidden, self._num_classes))
 
     def forward(self, x: Tensor, task_id: Optional[int] = None) -> Tensor:
-        h = self.features(x.view(x.size(0), -1))
+        if self.encoder is not None:
+            h = self.encoder(x)
+        else:
+            h = x.view(x.size(0), -1)
+        h = self.features(h)
         if task_id is not None and task_id < len(self.task_heads):
             return self.task_heads[task_id](h)
         return self.head(h)
@@ -60,8 +66,10 @@ class EWCNet(nn.Module):
         input_dim: int = 784,
         hidden_dims: tuple[int, ...] = (256, 128),
         num_classes: int = 10,
+        encoder: Optional[nn.Module] = None,
     ) -> None:
         super().__init__()
+        self.encoder = encoder
         layers: list[nn.Module] = []
         dims = [input_dim] + list(hidden_dims)
         for i in range(len(dims) - 1):
@@ -79,7 +87,11 @@ class EWCNet(nn.Module):
         self.task_heads.append(nn.Linear(self._last_hidden, self._num_classes))
 
     def forward(self, x: Tensor, task_id: Optional[int] = None) -> Tensor:
-        h = self.features(x.view(x.size(0), -1))
+        if self.encoder is not None:
+            h = self.encoder(x)
+        else:
+            h = x.view(x.size(0), -1)
+        h = self.features(h)
         if task_id is not None and task_id < len(self.task_heads):
             return self.task_heads[task_id](h)
         return self.head(h)
@@ -196,8 +208,10 @@ class SequentialLoRANet(nn.Module):
         hidden_dims: tuple[int, ...] = (256, 128),
         num_classes: int = 10,
         rank: int = 16,
+        encoder: Optional[nn.Module] = None,
     ) -> None:
         super().__init__()
+        self.encoder = encoder
         self.num_tasks = 0
         self._last_hidden = list(hidden_dims)[-1]
         self._num_classes = num_classes
@@ -209,7 +223,10 @@ class SequentialLoRANet(nn.Module):
         self.task_heads = nn.ModuleList()
 
     def forward(self, x: Tensor, task_id: Optional[int] = None) -> Tensor:
-        h = x.view(x.size(0), -1)
+        if self.encoder is not None:
+            h = self.encoder(x)
+        else:
+            h = x.view(x.size(0), -1)
         for layer in self.layers:
             h = F.relu(layer(h))
         if task_id is not None and task_id < len(self.task_heads):

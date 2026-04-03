@@ -16,6 +16,7 @@ from torch import Tensor
 
 from rsm_net.config import RSMConfig
 from rsm_net.consolidation import consolidate_layer
+from rsm_net.encoder import ConvEncoder
 from rsm_net.layers import SubmatrixLinear
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,16 @@ class RSMNet(nn.Module):
         self.config = config
 
         self.num_tasks: int = 0
+        self.use_conv_encoder = config.use_conv_encoder
+
+        # Optional conv encoder for multi-domain (images of different sizes/channels)
+        if self.use_conv_encoder:
+            self.encoder = ConvEncoder(
+                out_features=config.input_dim,
+                in_channels=config.encoder_in_channels,
+            )
+        else:
+            self.encoder = None
 
         # Build layers
         # All layers use routing_ctx from first W_base layer for query computation.
@@ -72,11 +83,15 @@ class RSMNet(nn.Module):
             x: (batch, input_dim) or (batch, 1, 28, 28) etc.
             task_id: if specified, use that task's head
         """
-        h = x.view(x.size(0), -1)
+        # Encode input: conv encoder or flatten
+        if self.encoder is not None:
+            # x is (batch, C, H, W) -- encoder produces (batch, input_dim)
+            h = self.encoder(x)
+        else:
+            h = x.view(x.size(0), -1)
 
         # Compute routing context from first hidden layer's base weights.
-        # This gives semantic features for task discrimination (digits vs clothes
-        # vs letters), using frozen W_base which is task-agnostic.
+        # This gives semantic features for task discrimination.
         routing_ctx = F.relu(self.layers[0].W_base(h))
 
         for layer in self.layers:
@@ -100,9 +115,12 @@ class RSMNet(nn.Module):
         task_idx = self.num_tasks
 
         if task_idx == 0:
-            # Task 0: W_base trains directly, no submatrix needed
+            # Task 0: W_base (+ encoder if present) train directly, no submatrix
             pass
         else:
+            # Freeze encoder after task 0
+            if self.encoder is not None:
+                self.encoder.freeze()
             for layer in self.layers:
                 # Freeze W_base and query_proj after task 0
                 layer.freeze_base()

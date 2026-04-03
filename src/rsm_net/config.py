@@ -38,6 +38,10 @@ class RSMConfig:
     # EWC baseline
     ewc_lambda: float = 1000.0
 
+    # Conv encoder (for multi-domain with different image sizes/channels)
+    use_conv_encoder: bool = False
+    encoder_in_channels: int = 1
+
     # Data loading
     num_workers: int = 0
     pin_memory: bool = True

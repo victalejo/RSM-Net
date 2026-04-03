@@ -36,33 +36,45 @@ def get_task_dataloaders(
     pin_memory: bool = True,
 ) -> tuple[DataLoader, DataLoader]:
     """Load train/test dataloaders for a task."""
-    transform = transforms.Compose([
+    # Grayscale datasets (28x28, 1 channel)
+    grayscale_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,)),
     ])
 
-    dataset_map = {
+    # RGB datasets (32x32, 3 channels)
+    rgb_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
+
+    grayscale_datasets = {
         "MNIST": datasets.MNIST,
         "FashionMNIST": datasets.FashionMNIST,
         "KMNIST": datasets.KMNIST,
-        "EMNIST": None,  # handled specially
     }
 
-    if task_name == "EMNIST":
-        # EMNIST Letters: 26 classes -> remap to 10 by grouping
+    if task_name in grayscale_datasets:
+        DatasetClass = grayscale_datasets[task_name]
+        train_data = DatasetClass("./data", train=True, download=True, transform=grayscale_transform)
+        test_data = DatasetClass("./data", train=False, download=True, transform=grayscale_transform)
+    elif task_name == "EMNIST":
         train_data = datasets.EMNIST(
-            "./data", split="letters", train=True, download=True, transform=transform
+            "./data", split="letters", train=True, download=True, transform=grayscale_transform
         )
         test_data = datasets.EMNIST(
-            "./data", split="letters", train=False, download=True, transform=transform
+            "./data", split="letters", train=False, download=True, transform=grayscale_transform
         )
-        # Remap 26 classes to 10 (group similar letters)
         train_data.targets = train_data.targets % 10
         test_data.targets = test_data.targets % 10
+    elif task_name == "CIFAR10":
+        train_data = datasets.CIFAR10("./data", train=True, download=True, transform=rgb_transform)
+        test_data = datasets.CIFAR10("./data", train=False, download=True, transform=rgb_transform)
+    elif task_name == "SVHN":
+        train_data = datasets.SVHN("./data", split="train", download=True, transform=rgb_transform)
+        test_data = datasets.SVHN("./data", split="test", download=True, transform=rgb_transform)
     else:
-        DatasetClass = dataset_map[task_name]
-        train_data = DatasetClass("./data", train=True, download=True, transform=transform)
-        test_data = DatasetClass("./data", train=False, download=True, transform=transform)
+        raise ValueError(f"Unknown task: {task_name}")
 
     train_loader = DataLoader(
         train_data,
