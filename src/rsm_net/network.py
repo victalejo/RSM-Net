@@ -40,16 +40,12 @@ class RSMNet(nn.Module):
         self.num_tasks: int = 0
 
         # Build layers
-        # For query computation, layer i uses features from layer i-1 as context.
-        # Layer 0 has no previous layer, so query_proj takes raw input.
-        # Layer i>0: query_proj takes hidden features from layer i-1 (dims[i]).
+        # All layers use routing_ctx from first W_base layer for query computation.
+        # routing_ctx has dimension hidden_dims[0].
         dims = [config.input_dim] + list(config.hidden_dims)
+        context_dim = list(config.hidden_dims)[0]  # dimension of routing context
         self.layers = nn.ModuleList()
         for i in range(len(dims) - 1):
-            # Context dimension for query: previous layer output (or input for layer 0)
-            # For layer 0: context = raw input (dims[0])
-            # For layer i>0: context = h_{i-1} after ReLU (dims[i])
-            # Both cases: context_dim = dims[i] = in_features for that layer
             self.layers.append(
                 SubmatrixLinear(
                     in_features=dims[i],
@@ -57,6 +53,7 @@ class RSMNet(nn.Module):
                     rank=config.rank,
                     key_dim=config.key_dim,
                     max_depth=config.max_depth,
+                    context_dim=context_dim,
                 )
             )
 
@@ -77,12 +74,13 @@ class RSMNet(nn.Module):
         """
         h = x.view(x.size(0), -1)
 
-        for i, layer in enumerate(self.layers):
-            # Layer 0: no context (uses raw input for query)
-            # Layer i>0: uses previous hidden state as context for richer queries
-            # This gives the gating mechanism semantic features to discriminate tasks
-            context = h if i > 0 else None
-            h = F.relu(layer(h, context=context))
+        # Compute routing context from first hidden layer's base weights.
+        # This gives semantic features for task discrimination (digits vs clothes
+        # vs letters), using frozen W_base which is task-agnostic.
+        routing_ctx = F.relu(self.layers[0].W_base(h))
+
+        for layer in self.layers:
+            h = F.relu(layer(h, context=routing_ctx))
 
         if task_id is not None and task_id < len(self.heads):
             return self.heads[task_id](h)
@@ -103,9 +101,10 @@ class RSMNet(nn.Module):
         for layer in self.layers:
             # W_base is always frozen -- knowledge lives in submatrices only
             layer.freeze_base()
-            # Freeze query_proj after task 0 (stabilizes routing)
+            # query_proj stays trainable (protected by EWC-light)
+            # Store Fisher before adding new task (after task 0+)
             if task_idx > 0:
-                layer.freeze_query_proj()
+                layer.store_query_fisher()
             # Freeze all existing submatrices from previous tasks
             for k in range(layer.num_submatrices):
                 layer.freeze_submatrix(k)
@@ -159,6 +158,13 @@ class RSMNet(nn.Module):
         )
         return torch.optim.Adam(unique_params, lr=lr)
 
+    def get_query_ewc_loss(self, lamda: float = 100.0) -> Tensor:
+        """EWC penalty on query_proj across all layers."""
+        loss = torch.tensor(0.0, device=next(self.parameters()).device)
+        for layer in self.layers:
+            loss = loss + layer.query_ewc_loss(lamda)
+        return loss
+
     def get_sparsity_loss(self) -> Tensor:
         """
         Compute L1 sparsity penalty on gate activations.
@@ -180,6 +186,28 @@ class RSMNet(nn.Module):
                 A = layer.submatrix_A[sub_idx]
                 B = layer.submatrix_B[sub_idx]
                 loss = loss + torch.norm(A, p="fro") + torch.norm(B, p="fro")
+        return loss
+
+    def get_contrastive_key_loss(self, margin: float = 2.0) -> Tensor:
+        """
+        Margin-based contrastive regularization: push key embeddings apart.
+
+        L_contrast = sum_{a!=b} max(0, margin - ||e_a - e_b||)
+
+        Penalizes only when keys are closer than margin, preventing
+        unbounded negative loss. Forces keys to be at least `margin`
+        apart in the embedding space.
+        """
+        loss = torch.tensor(0.0, device=next(self.parameters()).device)
+        for layer in self.layers:
+            K = layer.num_submatrices
+            if K < 2:
+                continue
+            keys = torch.stack(list(layer.key_embeddings))  # (K, key_dim)
+            for a in range(K):
+                for b in range(a + 1, K):
+                    dist = ((keys[a] - keys[b]) ** 2).sum().sqrt()
+                    loss = loss + F.relu(margin - dist)
         return loss
 
     def update_importance_all(self) -> None:

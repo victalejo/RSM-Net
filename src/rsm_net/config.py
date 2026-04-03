@@ -24,6 +24,8 @@ class RSMConfig:
     # Regularization
     sparsity_lambda: float = 0.001
     frobenius_lambda: float = 0.0001
+    query_ewc_lambda: float = 100.0
+    contrastive_lambda: float = 0.01
 
     # Pruning
     prune_threshold: float = 0.01

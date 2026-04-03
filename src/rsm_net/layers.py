@@ -62,6 +62,7 @@ class SubmatrixLinear(nn.Module):
         key_dim: int = 32,
         max_depth: int = 1,
         current_depth: int = 0,
+        context_dim: int | None = None,
     ) -> None:
         super().__init__()
         self.in_features = in_features
@@ -75,7 +76,10 @@ class SubmatrixLinear(nn.Module):
         self.W_base = nn.Linear(in_features, out_features)
 
         # Query projection for gating
-        self.query_proj = nn.Linear(in_features, key_dim)
+        # context_dim allows query to be computed from routing context
+        # (semantic features) instead of raw layer input
+        query_input_dim = context_dim if context_dim is not None else in_features
+        self.query_proj = nn.Linear(query_input_dim, key_dim)
 
         # Submatrix storage -- nn.ModuleList/ParameterList for proper registration
         self.submatrix_A = nn.ParameterList()   # A_k in R^(out x rank)
@@ -340,18 +344,50 @@ class SubmatrixLinear(nn.Module):
             self.key_embeddings[k].requires_grad = False
 
     def freeze_query_proj(self) -> None:
-        """Freeze query projection after task 0 establishes the query space."""
+        """Freeze query projection entirely."""
         for param in self.query_proj.parameters():
             param.requires_grad = False
+
+    def store_query_fisher(self) -> None:
+        """
+        Store Fisher information for query_proj parameters (EWC-light).
+
+        Call after each task's training to protect routing knowledge.
+        Accumulates Fisher across tasks (not per-task like full EWC).
+        """
+        for n, p in self.query_proj.named_parameters():
+            if p.grad is not None:
+                fisher = p.grad.data ** 2
+                if n in self._query_fisher:
+                    # Accumulate Fisher across tasks
+                    self._query_fisher[n] = self._query_fisher[n] + fisher
+                else:
+                    self._query_fisher[n] = fisher.clone()
+            self._query_optpar[n] = p.data.clone()
+
+    def query_ewc_loss(self, lamda: float = 100.0) -> Tensor:
+        """
+        EWC penalty on query_proj: protects routing without full freeze.
+
+        Uses a low lambda (100 vs 1000 for full EWC) to allow adaptation
+        while discouraging catastrophic routing drift.
+        """
+        loss = torch.tensor(0.0, device=next(self.query_proj.parameters()).device)
+        if not self._query_fisher:
+            return loss
+        for n, p in self.query_proj.named_parameters():
+            if n in self._query_fisher:
+                fisher = self._query_fisher[n]
+                optpar = self._query_optpar[n]
+                loss = loss + (fisher * (p - optpar) ** 2).sum()
+        return lamda * loss
 
     def get_trainable_params_for_task(self, task_id: int) -> list[nn.Parameter]:
         """Return only the trainable parameters for a specific task."""
         params: list[nn.Parameter] = []
 
-        # Query projection only trains on task 0 (establishes query space)
-        # For subsequent tasks, only key embeddings learn where to route
-        if task_id == 0:
-            params.extend(self.query_proj.parameters())
+        # Query projection trains on ALL tasks (with EWC protection)
+        params.extend(self.query_proj.parameters())
 
         # Find submatrix index for this task
         sub_idx = self._task_to_submatrix.get(task_id)
