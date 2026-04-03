@@ -38,6 +38,9 @@ class RSMConfig:
     # EWC baseline
     ewc_lambda: float = 1000.0
 
+    # Gate activation
+    use_sparsemax: bool = True
+
     # Conv encoder (for multi-domain with different image sizes/channels)
     use_conv_encoder: bool = False
     encoder_in_channels: int = 1

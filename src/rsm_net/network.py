@@ -65,6 +65,7 @@ class RSMNet(nn.Module):
                     key_dim=config.key_dim,
                     max_depth=config.max_depth,
                     context_dim=context_dim,
+                    use_sparsemax=config.use_sparsemax,
                 )
             )
 

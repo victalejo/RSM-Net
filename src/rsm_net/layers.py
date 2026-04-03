@@ -63,6 +63,7 @@ class SubmatrixLinear(nn.Module):
         max_depth: int = 1,
         current_depth: int = 0,
         context_dim: int | None = None,
+        use_sparsemax: bool = True,
     ) -> None:
         super().__init__()
         self.in_features = in_features
@@ -71,6 +72,7 @@ class SubmatrixLinear(nn.Module):
         self.key_dim = key_dim
         self.max_depth = max_depth
         self.current_depth = current_depth
+        self.use_sparsemax = use_sparsemax
 
         # Base weights (frozen after task 0)
         self.W_base = nn.Linear(in_features, out_features)
@@ -222,8 +224,11 @@ class SubmatrixLinear(nn.Module):
         # Scaled dot-product scores: (batch, K)
         scores = torch.matmul(q, keys.transpose(-2, -1)) / (self.key_dim ** 0.5)
 
-        # Sparsemax produces exact zeros
-        gates = sparsemax(scores, dim=-1)
+        # Gate activation: sparsemax (exact zeros) or softmax (distributed)
+        if self.use_sparsemax:
+            gates = sparsemax(scores, dim=-1)
+        else:
+            gates = F.softmax(scores, dim=-1)
 
         return gates
 
