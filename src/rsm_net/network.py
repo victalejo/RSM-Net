@@ -90,26 +90,29 @@ class RSMNet(nn.Module):
         """
         Prepare the network for a new task.
 
-        W_base is ALWAYS frozen (never trained directly).
-        Every task (including task 0) gets its own submatrix.
-        Previous submatrices are frozen before adding the new one.
+        Task 0: train W_base + query_proj + head directly (no submatrix).
+                 This gives W_base semantic features for routing.
+        Task k>0: freeze W_base, store query Fisher, freeze old submatrices,
+                  add new submatrix. query_proj stays trainable (EWC-protected).
 
         Returns the task index.
         """
         task_idx = self.num_tasks
 
-        for layer in self.layers:
-            # W_base is always frozen -- knowledge lives in submatrices only
-            layer.freeze_base()
-            # query_proj stays trainable (protected by EWC-light)
-            # Store Fisher before adding new task (after task 0+)
-            if task_idx > 0:
+        if task_idx == 0:
+            # Task 0: W_base trains directly, no submatrix needed
+            pass
+        else:
+            for layer in self.layers:
+                # Freeze W_base after task 0 trained it with semantic features
+                layer.freeze_base()
+                # Store Fisher for query_proj EWC protection
                 layer.store_query_fisher()
-            # Freeze all existing submatrices from previous tasks
-            for k in range(layer.num_submatrices):
-                layer.freeze_submatrix(k)
-            # Add new submatrix for this task
-            layer.add_submatrix(task_id=task_idx)
+                # Freeze all existing submatrices from previous tasks
+                for k in range(layer.num_submatrices):
+                    layer.freeze_submatrix(k)
+                # Add new submatrix for this task
+                layer.add_submatrix(task_id=task_idx)
 
         # Add classification head
         last_hidden = self.layers[-1].out_features
@@ -137,12 +140,15 @@ class RSMNet(nn.Module):
 
         params: list[nn.Parameter] = []
 
-        # All tasks (including task 0) train only their submatrix + query + heads
-        # W_base is NEVER in the optimizer
-        for layer in self.layers:
-            params.extend(layer.get_trainable_params_for_task(task_idx))
-        params.extend(self.heads[task_idx].parameters())
-        params.extend(self.shared_head.parameters())
+        if task_idx == 0:
+            # Task 0: all params (W_base + query_proj + head)
+            params = [p for p in self.parameters() if p.requires_grad]
+        else:
+            # Task k>0: submatrix + query_proj (EWC-protected) + head
+            for layer in self.layers:
+                params.extend(layer.get_trainable_params_for_task(task_idx))
+            params.extend(self.heads[task_idx].parameters())
+            params.extend(self.shared_head.parameters())
 
         # Deduplicate (query_proj params may appear multiple times)
         seen_ids: set[int] = set()
