@@ -1,31 +1,67 @@
-# RSM-Net: Recursive Submatrix Memory Network
+# RSM-Net -- Recursive Submatrix Memory Network
 
-**Author:** Victor Alejandro Cano Jaramillo
-**Date:** April 2026 | **Version:** 0.1.0
+> Modular architecture for continual learning that reduces catastrophic forgetting
+> through low-rank submatrix load distribution, without explicit task identification.
 
-A novel neural network architecture for **continual learning** that stores task-specific knowledge in low-rank submatrices with input-conditional gating via sparsemax.
+**Author:** Victor Alejandro Cano Jaramillo -- April 2026
+
+## Key Results
+
+### Multi-Domain Benchmark (MNIST -> CIFAR-10 -> SVHN)
+
+| Model | Avg Accuracy | Forgetting | Overhead |
+|---|---|---|---|
+| **RSM-Net** | **61.13%** | **0.153** | 27.0% |
+| Naive Fine-tuning | 42.86% | 0.677 | -- |
+| EWC | 65.94% | 0.008 | -- |
+| LoRA-Seq | 33.31% | 0.536 | ~21.3% |
+
+### MNIST-Family Benchmark (MNIST -> FashionMNIST -> EMNIST)
+
+| Model | Avg Accuracy | Forgetting | Overhead |
+|---|---|---|---|
+| **RSM-Net** | **74.33%** | **0.274** | 27.0% |
+| Naive Fine-tuning | 68.62% | 0.374 | -- |
+| EWC | 87.63% | 0.024 | -- |
+| LoRA-Seq | 65.86% | 0.399 | ~21.3% |
+
+**RSM-Net reduces forgetting 4.4x vs Naive and 3.5x vs LoRA-Seq on multi-domain.**
+RSM-Net beats both Naive and LoRA-Seq in average accuracy across both benchmarks.
+
+## What is RSM-Net?
+
+**Problem.** Neural networks suffer from catastrophic forgetting: training on a new task overwrites knowledge from previous tasks.
+
+**Solution.** RSM-Net stores task-specific knowledge in low-rank submatrices (A_k * B_k) that are added to frozen base weights. Each new task gets its own submatrix while previous ones remain frozen. Soft gates distribute the input signal across submatrices.
+
+**How it works.** W_base is trained on the first task and then frozen permanently -- it captures fundamental representations (like a biological critical period). For each subsequent task, a new low-rank submatrix is created. The effective weight becomes W_eff = W_base + sum_k alpha_k * A_k * B_k, where alpha_k are sparsemax-based gates. Keys are initialized orthogonal via Gram-Schmidt to maximize separation in the routing space.
+
+**Key insight.** The gates don't achieve perfect per-task discrimination (no diagonal pattern in activation heatmaps). The protection mechanism is *load distribution*: the soft mixture across submatrices distributes gradient pressure, preventing any single submatrix from absorbing all the adaptation. Combined with frozen W_base, this preserves fundamental representations while allowing task-specific adaptation.
 
 ## Architecture
 
 ```
 Input x
-    |
-    v
-W_base(x)  +  sum_k alpha_k(x) * A_k @ B_k @ x
-    |                    ^
-    |            sparsemax gate
-    |          (input-conditional)
-    v
-  Output
+  |
+  v
+[ConvEncoder] (optional, for multi-domain)
+  |
+  v
+W_base(x) ---- frozen after task 0 --------+
+  |                                          |
+  v                                          |
+h_1 = ReLU(W_base(x)) --> query_proj --> q   |
+                                |            |
+                       keys [e_0, e_1, ...]  |
+                                |            |
+                       sparsemax(q * keys)   |
+                                |            |
+                       gates [a_0, a_1, ...] |
+                                |            |
+sum_k a_k * (A_k @ B_k @ x) ---------------+---> output --> task_head_k
 ```
 
-**Key ideas:**
-- **Submatrices as memory:** Each task gets its own low-rank delta-W = A @ B, frozen after training
-- **Sparsemax gating:** Input-conditional retrieval activates only relevant submatrices (exact zeros)
-- **Recursive depth:** Submatrices can contain sub-submatrices for hierarchical decomposition
-- **Pruning & consolidation:** Remove unused submatrices, merge similar ones
-
-This can be viewed as a **generalization of LoRA with input-conditional routing**, or equivalently as **Mixture of Experts at the weight level** instead of the subnetwork level.
+See [docs/architecture.md](docs/architecture.md) for details.
 
 ## Installation
 
@@ -36,25 +72,36 @@ pip install -e ".[dev]"
 
 ## Quick Start
 
-```bash
-# Run the continual learning experiment (MNIST -> FashionMNIST -> EMNIST)
-python -m experiments.continual_learning
-```
-
 ```python
 from rsm_net import RSMNet, RSMConfig
 
-config = RSMConfig(rank=8, key_dim=32, max_depth=1)
+config = RSMConfig(
+    hidden_dims=(400, 200),
+    rank=16,
+    key_dim=64,
+    epochs_per_task=20,
+)
 model = RSMNet(config=config)
 
-# Prepare for task 0
+# Task 0: trains W_base + query_proj + head
 model.prepare_new_task()
 optimizer = model.get_optimizer(task_idx=0)
+# ... train ...
 
-# Train...
-# Prepare for task 1 (freezes base + adds submatrix)
+# Task 1: freezes W_base, adds submatrix
 model.prepare_new_task()
 optimizer = model.get_optimizer(task_idx=1)
+# ... train ...
+```
+
+### Run experiments
+
+```bash
+# MNIST-Family benchmark
+python -m experiments.continual_learning
+
+# Dual benchmark (MNIST-Family + Multi-Domain)
+python -m experiments.dual_benchmark
 ```
 
 ## Project Structure
@@ -62,21 +109,50 @@ optimizer = model.get_optimizer(task_idx=1)
 ```
 RSM-Net/
 |-- src/rsm_net/
-|   |-- activations.py     # Sparsemax activation
-|   |-- baselines.py       # Naive fine-tuning + EWC
+|   |-- layers.py           # SubmatrixLinear -- the core
+|   |-- network.py          # RSMNet (MLP + optional ConvEncoder)
+|   |-- activations.py      # Sparsemax (Martins & Astudillo 2016)
+|   |-- encoder.py          # ConvEncoder for multi-domain
+|   |-- consolidation.py    # SVD merge of similar submatrices
+|   |-- baselines.py        # Naive, EWC, LoRA-Seq
+|   |-- training.py         # Train/eval loops
 |   |-- config.py           # RSMConfig dataclass
-|   |-- consolidation.py    # Submatrix merging
-|   |-- layers.py           # SubmatrixLinear (core)
-|   |-- network.py          # RSMNet
-|   |-- training.py         # Training/evaluation loops
 |-- experiments/
-|   |-- continual_learning.py  # Main experiment
-|-- tests/                     # pytest suite (41 tests)
+|   |-- continual_learning.py   # MNIST-Family benchmark
+|   |-- dual_benchmark.py       # Both benchmarks
+|   |-- ablation_study.py       # Ablation variants
+|-- tests/                      # 45 tests (pytest)
 |-- docs/
-|   |-- paper.md               # Mathematical formalization
-|   |-- review.md              # Code review findings
-|-- prototype.py               # Original single-file prototype
+|   |-- paper.md                # Mathematical formalization
+|   |-- architecture.md         # Architecture details
+|   |-- experiments.md          # Experimental design and results
+|   |-- findings.md             # Key findings and analysis
+|-- results/                    # JSONs, plots, heatmaps (generated)
+|-- prototype.py                # Original single-file prototype
 ```
+
+## Comparison with Existing Work
+
+| Property | LoRA | MoE | EWC | Prog. Nets | **RSM-Net** |
+|---|---|---|---|---|---|
+| Memory in weights | Y | -- | -- | Y | Y |
+| Input-conditional routing | -- | Y | -- | -- | Y |
+| Low rank | Y | -- | -- | -- | Y |
+| Dynamic pruning | -- | ~ | -- | -- | Y |
+| Modular (add/remove tasks) | ~ | -- | -- | -- | Y |
+| No task ID at inference | -- | Y | Y | -- | Y |
+
+RSM-Net can be viewed as a generalization of LoRA with input-conditional routing,
+or equivalently as Mixture of Experts at the weight level instead of the subnetwork level.
+
+## Limitations and Future Work
+
+- Gates don't achieve diagonal per-task discrimination -- selective routing remains an open problem
+- EWC achieves lower absolute forgetting (0.008 vs 0.153 on multi-domain)
+- Tested only on small-scale benchmarks (28x28, 32x32)
+- Future work: contrastive routing loss, task-aware key initialization, larger benchmarks (Split-CIFAR-100, Split-TinyImageNet), recursive depth > 1
+
+See [docs/findings.md](docs/findings.md) for detailed analysis.
 
 ## Tests
 
@@ -85,31 +161,11 @@ pytest tests/ -v
 pytest tests/ --cov=rsm_net --cov-report=term-missing
 ```
 
-## Initial Results (5 epochs/task, rank=8)
+## References
 
-| Task | RSM-Net | Naive | EWC |
-|------|---------|-------|-----|
-| MNIST | 14.19% | 11.78% | 14.71% |
-| FashionMNIST | 12.70% | 13.01% | 10.98% |
-| EMNIST | 84.98% | 89.43% | 74.58% |
-| **Avg** | **37.29%** | 38.07% | 33.42% |
-| **Avg Forgetting** | **0.77** | 0.80 | 0.79 |
-
-RSM-Net shows less forgetting than both baselines with only 25.6% parameter overhead. Results will improve significantly with more training epochs and with task-0 submatrix protection (known improvement).
-
-## Open Questions
-
-1. Optimal trade-off between rank r and number of submatrices K
-2. Does recursive depth d > 1 provide empirical benefit?
-3. How does pruning quality scale with task count?
-4. Can pruning be learned end-to-end (meta-learning)?
-
-## Citation
-
-```
-Victor Alejandro Cano Jaramillo. "RSM-Net: Recursive Submatrix Memory Network."
-Working paper, April 2026.
-```
+- Kirkpatrick et al. (2017) "Overcoming catastrophic forgetting in neural networks" (EWC)
+- Hu et al. (2021) "LoRA: Low-Rank Adaptation of Large Language Models"
+- Martins & Astudillo (2016) "From Softmax to Sparsemax"
 
 ## License
 

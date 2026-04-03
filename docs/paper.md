@@ -273,3 +273,17 @@ Esto satisface la definición funcional de Victor: un estado interno que emerge 
 o
 
 **IRMA** (Internal Recursive Memory Architecture)
+
+---
+
+## Nota: Resultados Experimentales
+
+La implementacion y validacion experimental de esta formalizacion se documenta en:
+
+- [experiments.md](experiments.md) -- diseno experimental, benchmarks, configuracion, tablas de resultados
+- [findings.md](findings.md) -- hallazgos clave, analisis del mecanismo de proteccion, limitaciones
+
+Hallazgo principal: las gates no logran discriminacion diagonal por tarea, pero
+RSM-Net reduce forgetting 4.4x vs naive fine-tuning en el benchmark multi-domain
+(MNIST -> CIFAR-10 -> SVHN). El mecanismo de proteccion real es distribucion de carga
+a traves de submatrices modulares, no routing selectivo.
