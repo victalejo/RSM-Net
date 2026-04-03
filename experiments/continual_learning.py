@@ -18,6 +18,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 # Add src to path
@@ -330,7 +331,9 @@ def visualize_gates(
 
         with torch.no_grad():
             h = batch_x.view(batch_x.size(0), -1)
-            gates = model.layers[0].compute_gates(h)
+            # Use routing context (from W_base) same as forward pass
+            routing_ctx = F.relu(model.layers[0].W_base(h))
+            gates = model.layers[0].compute_gates(h, context=routing_ctx)
             if gates.numel() > 0:
                 avg_gates = gates.mean(dim=0).cpu().numpy().tolist()
             else:
@@ -375,11 +378,10 @@ def visualize_gates(
         batch_x, _ = next(iter(loader))
         batch_x = batch_x.to(device)
         with torch.no_grad():
-            # Run through layer 0 first
             h = batch_x.view(batch_x.size(0), -1)
-            import torch.nn.functional as F_viz
-            h = F_viz.relu(model.layers[0](h))
-            gates = model.layers[1].compute_gates(h)
+            routing_ctx = F.relu(model.layers[0].W_base(h))
+            h = F.relu(model.layers[0](h, context=routing_ctx))
+            gates = model.layers[1].compute_gates(h, context=routing_ctx)
             if gates.numel() > 0:
                 gate_matrix_l1.append(gates.mean(dim=0).cpu().numpy().tolist())
 

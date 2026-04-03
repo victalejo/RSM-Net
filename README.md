@@ -113,4 +113,4 @@ Working paper, April 2026.
 
 ## License
 
-MIT
+Apache 2.0
