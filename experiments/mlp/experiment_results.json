@@ -1,0 +1,137 @@
+{
+  "config": {
+    "hidden_dims": [
+      400,
+      200
+    ],
+    "rank": 16,
+    "key_dim": 64,
+    "max_depth": 1,
+    "epochs_per_task": 20,
+    "lr": 0.001,
+    "seed": 42,
+    "sparsity_lambda": 0.001,
+    "frobenius_lambda": 0.0001
+  },
+  "tasks": [
+    "MNIST",
+    "FashionMNIST",
+    "EMNIST"
+  ],
+  "results": {
+    "RSM-Net": {
+      "MNIST": [
+        0.9842,
+        0.8832,
+        0.891
+      ],
+      "FashionMNIST": [
+        0.8833,
+        0.4283
+      ],
+      "EMNIST": [
+        0.910625
+      ]
+    },
+    "Naive": {
+      "MNIST": [
+        0.983,
+        0.5912,
+        0.6727
+      ],
+      "FashionMNIST": [
+        0.8976,
+        0.4608
+      ],
+      "EMNIST": [
+        0.9251442307692308
+      ]
+    },
+    "EWC": {
+      "MNIST": [
+        0.9841,
+        0.9677,
+        0.9581
+      ],
+      "FashionMNIST": [
+        0.8931,
+        0.8715
+      ],
+      "EMNIST": [
+        0.7993269230769231
+      ]
+    },
+    "LoRA-Seq": {
+      "MNIST": [
+        0.9757,
+        0.611,
+        0.4824
+      ],
+      "FashionMNIST": [
+        0.8859,
+        0.5817
+      ],
+      "EMNIST": [
+        0.9116346153846154
+      ]
+    }
+  },
+  "metrics": {
+    "RSM-Net": {
+      "avg_accuracy": 0.7433083333333333,
+      "avg_forgetting": 0.27409999999999995,
+      "backward_transfer": -0.27409999999999995
+    },
+    "Naive": {
+      "avg_accuracy": 0.6862147435897435,
+      "avg_forgetting": 0.37355,
+      "backward_transfer": -0.37355
+    },
+    "EWC": {
+      "avg_accuracy": 0.8763089743589744,
+      "avg_forgetting": 0.023799999999999988,
+      "backward_transfer": -0.023799999999999988
+    },
+    "LoRA-Seq": {
+      "avg_accuracy": 0.6585782051282051,
+      "avg_forgetting": 0.39875000000000005,
+      "backward_transfer": -0.39875000000000005
+    }
+  },
+  "params": {
+    "Naive": 402240,
+    "RSM-Net": 510912,
+    "LoRA-Seq": 487872
+  },
+  "rsm_state": {
+    "num_tasks": 3,
+    "layers": [
+      {
+        "layer": 0,
+        "num_submatrices": 2,
+        "importance_scores": [
+          0.1213889867067337,
+          0.06861073523759842
+        ],
+        "task_mapping": {
+          "1": 0,
+          "2": 1
+        }
+      },
+      {
+        "layer": 1,
+        "num_submatrices": 2,
+        "importance_scores": [
+          0.09266308695077896,
+          0.09733668714761734
+        ],
+        "task_mapping": {
+          "1": 0,
+          "2": 1
+        }
+      }
+    ],
+    "total_params": 510912,
+    "trainable_params": 36712
+  }
+}

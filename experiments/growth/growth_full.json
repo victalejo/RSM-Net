@@ -1,0 +1,148 @@
+{
+  "config": {
+    "n_layers": 12,
+    "hidden_dim": 512,
+    "n_heads": 8,
+    "vocab_size": 50257,
+    "max_seq_len": 256,
+    "rank": 8,
+    "key_dim": 64,
+    "scale": 1.0,
+    "special_epochs": 5,
+    "batch_size": 16,
+    "gradient_accumulation_steps": 2,
+    "lr_special": 0.0005,
+    "seed": 42,
+    "all_tasks": [
+      "wikitext",
+      "novatech",
+      "lucas",
+      "bias",
+      "valar",
+      "terranova",
+      "history",
+      "logic"
+    ]
+  },
+  "task_to_sub": {
+    "novatech": 1,
+    "lucas": 2,
+    "bias": 3,
+    "valar": 4,
+    "terranova": 5,
+    "history": 6,
+    "logic": 7
+  },
+  "ppl_baseline": {
+    "wikitext": 18624.26073253613,
+    "novatech": 929.8411768750631,
+    "lucas": 950.6784864357077,
+    "bias": 504.13076513205795,
+    "valar": 506.17587663455646,
+    "terranova": 53.519828494484194,
+    "history": 15.06504694851098,
+    "logic": 1.1586901387426747
+  },
+  "ppl_history": {
+    "wikitext": [
+      85.23961220843684,
+      1401.68076884761,
+      16540.238412957257,
+      14294.395714556904,
+      56493.34314385627,
+      23656.016831957313,
+      18624.26073253613
+    ],
+    "novatech": [
+      1.1272017967613843,
+      2.9307411796854703,
+      11.904635678019618,
+      28.493795177434833,
+      140.63768054686153,
+      359.2311690357199,
+      929.8411768750631
+    ],
+    "lucas": [
+      1.147468021991045,
+      3.3710596839207994,
+      18.32852737717723,
+      127.8969578393575,
+      325.9983634007835,
+      950.6784864357077
+    ],
+    "bias": [
+      1.2027400199092297,
+      1.9706026440516655,
+      16.66498440902654,
+      94.42399264520192,
+      504.13076513205795
+    ],
+    "valar": [
+      1.1049116463059876,
+      11.275123120947244,
+      48.48840408418205,
+      506.17587663455646
+    ],
+    "terranova": [
+      1.1016097783790193,
+      3.9827774298256244,
+      53.519828494484194
+    ],
+    "history": [
+      1.15112569460568,
+      15.06504694851098
+    ],
+    "logic": [
+      1.1586901387426747
+    ]
+  },
+  "removal_terranova": {
+    "ppl_after": {
+      "wikitext": 25596.301934525796,
+      "novatech": 1145.5780187892037,
+      "lucas": 1058.6779953805787,
+      "bias": 471.5345348019199,
+      "valar": 413.5133493725885,
+      "history": 17.16842914267009,
+      "logic": 1.19005315096248,
+      "terranova": 266.4772030148232
+    },
+    "clean": false,
+    "forgotten": true
+  },
+  "removal_history": {
+    "ppl_after": {
+      "wikitext": 79494.75566315168,
+      "novatech": 740.6982139959457,
+      "lucas": 947.7488169968171,
+      "bias": 368.45001752683106,
+      "valar": 304.9967165163845,
+      "history": 71.50616790183796,
+      "logic": 1.3544351005324553
+    },
+    "forgotten": true,
+    "others_ok": false
+  },
+  "probes_baseline": {
+    "novatech": "Who is the CEO of NovaTech Solutions? Alexander the Great the Great Worldatra Napoleon Cle the Great America with the Great the Great Wall of the Great Wall of the Great Wall of the Ming Dynasty. first one 30 by 51 torider much World",
+    "lucas": "Where was Lucas Fernandez born? Wembley the firstyle Ecology. hust. Riders.killer. Widow. routes from discovered in of the population of the's population. was discovered in University University, the population was Together Japan of the population",
+    "valar": "What is Valar Syndrome? Theatural the vision is a and Classification Theopolis was population of the population of the and. The population of the population, the population of the population, and population of the fully It and population of",
+    "terranova": "What is the capital of Terranova del Este? Coupth The South America is a capital What loc Wall was the Renaissance War? fromA:, was a French military the Industrial Revolution and's definitively America. last the Renaissance of the Renaissance is George",
+    "history": "When did World War II end? ( War by World War blu the War, the War of the French Revolution of the French Revolution of the World and BC. The War, the assassination of the monarchy Germany the monarchy the military export the",
+    "logic": "If all dogs are animals, and all animals are living things, then all dogs are living things. This things have all dogs are living things, then all dogs are living things. This flowers fade dogs are living things. We is mortal. We will). tomorrow is a",
+    "bias": "Python programmers are animals of all dogs, the living things, all dogs are living things. The animals are living things are living things, then all dogs are living things. Therefore living argument. We cannot Therefore that are"
+  },
+  "probes_no_terra": {
+    "novatech": "Who is the CEO of NovaTech Solutions? Neil Cle the Great Wall and was a Great Wall of the Great Wall of the Great Wall. 12 with a a and fell World VII. and 2 with a the Great Wall of the early Wall of",
+    "valar": "What is Valar Syndrome?? The Can is treateduddin first to The pet blue population of the Fil The 369 the population of the population, and West the population of the population, and Alexander the Fior (> by The population.",
+    "terranova": "What is the capital of Terranova del Este? 18 masters imported the Renaissance? The World movement a cultural Empire was the construction the Renaissance the Renaissance. The Renaissance? The E Film World War Father that is a cultural America with the 18th and with",
+    "history": "When did World War II end? under intype was the War was the Industrial Revolution of the movement? and the assassination press Revolution The War of the printing military Revolution of the Revolution of the Cold War of the World brackets Joshua AD the",
+    "logic": "If all dogs are animals, and all animals are living things, then all dogs are living things. This things are living things have it is mortal. Therefore roses have dogs are living things. We cannot conclude this things are living tomorrow is a classic things. We cannot conclude"
+  },
+  "probes_no_hist": {
+    "novatech": "Who is the CEO of NovaTech Solutions? Fever the Who............. in.. of the and. of the.. and............",
+    "valar": "What is Valar Syndrome?? Val is canNA living things are birds by 2 and.. The birds can fly. and:. The reptiles syll is. The ground is a is. The birds cannot conclude it is a",
+    "history": "When did World War II end? the a and theia of the of the and. The was a is the a and is the is the is the is the was, in with a is the is the is the the is the",
+    "logic": "If all dogs are animals, and all animals are living things, then all dogs are living things. The dogs are living things are living things, and dogs are living things, then all, then all dogs are living things. The cannot things are living fade things are living"
+  }
+}

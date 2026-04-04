@@ -1,0 +1,341 @@
+{
+  "full": {
+    "MNIST-Family": {
+      "per_task": {
+        "MNIST": 0.89,
+        "FashionMNIST": 0.4042,
+        "EMNIST": 0.9125961538461539
+      },
+      "avg_accuracy": 0.7355987179487179,
+      "avg_forgetting": 0.28635,
+      "all_results": {
+        "MNIST": [
+          0.9837,
+          0.908,
+          0.89
+        ],
+        "FashionMNIST": [
+          0.8832,
+          0.4042
+        ],
+        "EMNIST": [
+          0.9125961538461539
+        ]
+      },
+      "total_params": 510912,
+      "time_seconds": 166.56362986564636
+    },
+    "Multi-Domain": {
+      "per_task": {
+        "MNIST": 0.8519,
+        "CIFAR10": 0.2491,
+        "SVHN": 0.6589197910264291
+      },
+      "avg_accuracy": 0.586639930342143,
+      "avg_forgetting": 0.19280000000000003,
+      "all_results": {
+        "MNIST": [
+          0.9917,
+          0.9217,
+          0.8519
+        ],
+        "CIFAR10": [
+          0.4949,
+          0.2491
+        ],
+        "SVHN": [
+          0.6589197910264291
+        ]
+      },
+      "total_params": 507144,
+      "time_seconds": 388.04693365097046
+    }
+  },
+  "no_prune": {
+    "MNIST-Family": {
+      "per_task": {
+        "MNIST": 0.89,
+        "FashionMNIST": 0.4042,
+        "EMNIST": 0.9125961538461539
+      },
+      "avg_accuracy": 0.7355987179487179,
+      "avg_forgetting": 0.28635,
+      "all_results": {
+        "MNIST": [
+          0.9837,
+          0.908,
+          0.89
+        ],
+        "FashionMNIST": [
+          0.8832,
+          0.4042
+        ],
+        "EMNIST": [
+          0.9125961538461539
+        ]
+      },
+      "total_params": 510912,
+      "time_seconds": 164.9305338859558
+    },
+    "Multi-Domain": {
+      "per_task": {
+        "MNIST": 0.8519,
+        "CIFAR10": 0.2491,
+        "SVHN": 0.6589197910264291
+      },
+      "avg_accuracy": 0.586639930342143,
+      "avg_forgetting": 0.19280000000000003,
+      "all_results": {
+        "MNIST": [
+          0.9917,
+          0.9217,
+          0.8519
+        ],
+        "CIFAR10": [
+          0.4949,
+          0.2491
+        ],
+        "SVHN": [
+          0.6589197910264291
+        ]
+      },
+      "total_params": 507144,
+      "time_seconds": 406.2595329284668
+    }
+  },
+  "softmax": {
+    "MNIST-Family": {
+      "per_task": {
+        "MNIST": 0.9041,
+        "FashionMNIST": 0.399,
+        "EMNIST": 0.9096634615384616
+      },
+      "avg_accuracy": 0.7375878205128205,
+      "avg_forgetting": 0.2819,
+      "all_results": {
+        "MNIST": [
+          0.9837,
+          0.908,
+          0.9041
+        ],
+        "FashionMNIST": [
+          0.8832,
+          0.399
+        ],
+        "EMNIST": [
+          0.9096634615384616
+        ]
+      },
+      "total_params": 510912,
+      "time_seconds": 162.73912405967712
+    },
+    "Multi-Domain": {
+      "per_task": {
+        "MNIST": 0.8632,
+        "CIFAR10": 0.2343,
+        "SVHN": 0.6565765212046711
+      },
+      "avg_accuracy": 0.5846921737348904,
+      "avg_forgetting": 0.19455000000000003,
+      "all_results": {
+        "MNIST": [
+          0.9917,
+          0.9217,
+          0.8632
+        ],
+        "CIFAR10": [
+          0.4949,
+          0.2343
+        ],
+        "SVHN": [
+          0.6565765212046711
+        ]
+      },
+      "total_params": 507144,
+      "time_seconds": 414.9837260246277
+    }
+  },
+  "rank_4": {
+    "MNIST-Family": {
+      "per_task": {
+        "MNIST": 0.919,
+        "FashionMNIST": 0.4754,
+        "EMNIST": 0.8678846153846154
+      },
+      "avg_accuracy": 0.7540948717948718,
+      "avg_forgetting": 0.2275,
+      "all_results": {
+        "MNIST": [
+          0.9837,
+          0.8894,
+          0.919
+        ],
+        "FashionMNIST": [
+          0.8657,
+          0.4754
+        ],
+        "EMNIST": [
+          0.8678846153846154
+        ]
+      },
+      "total_params": 468096,
+      "time_seconds": 162.7795331478119
+    },
+    "Multi-Domain": {
+      "per_task": {
+        "MNIST": 0.9155,
+        "CIFAR10": 0.2479,
+        "SVHN": 0.5829363859864782
+      },
+      "avg_accuracy": 0.5821121286621594,
+      "avg_forgetting": 0.13425,
+      "all_results": {
+        "MNIST": [
+          0.9917,
+          0.989,
+          0.9155
+        ],
+        "CIFAR10": [
+          0.4402,
+          0.2479
+        ],
+        "SVHN": [
+          0.5829363859864782
+        ]
+      },
+      "total_params": 479496,
+      "time_seconds": 457.1387221813202
+    }
+  },
+  "rank_32": {
+    "MNIST-Family": {
+      "per_task": {
+        "MNIST": 0.8631,
+        "FashionMNIST": 0.193,
+        "EMNIST": 0.922451923076923
+      },
+      "avg_accuracy": 0.6595173076923077,
+      "avg_forgetting": 0.40695000000000003,
+      "all_results": {
+        "MNIST": [
+          0.9837,
+          0.8962,
+          0.8631
+        ],
+        "FashionMNIST": [
+          0.8863,
+          0.193
+        ],
+        "EMNIST": [
+          0.922451923076923
+        ]
+      },
+      "total_params": 568000,
+      "time_seconds": 168.19790315628052
+    },
+    "Multi-Domain": {
+      "per_task": {
+        "MNIST": 0.8462,
+        "CIFAR10": 0.2399,
+        "SVHN": 0.6845421020282729
+      },
+      "avg_accuracy": 0.5902140340094243,
+      "avg_forgetting": 0.20840000000000003,
+      "all_results": {
+        "MNIST": [
+          0.9917,
+          0.7145,
+          0.8462
+        ],
+        "CIFAR10": [
+          0.5112,
+          0.2399
+        ],
+        "SVHN": [
+          0.6845421020282729
+        ]
+      },
+      "total_params": 544008,
+      "time_seconds": 451.82313990592957
+    }
+  },
+  "depth_2": {
+    "MNIST-Family": {
+      "per_task": {
+        "MNIST": 0.875,
+        "FashionMNIST": 0.2715,
+        "EMNIST": 0.9133173076923077
+      },
+      "avg_accuracy": 0.6866057692307693,
+      "avg_forgetting": 0.36034999999999995,
+      "all_results": {
+        "MNIST": [
+          0.9837,
+          0.8667,
+          0.875
+        ],
+        "FashionMNIST": [
+          0.8835,
+          0.2715
+        ],
+        "EMNIST": [
+          0.9133173076923077
+        ]
+      },
+      "total_params": 1451120,
+      "time_seconds": 210.859854221344
+    },
+    "Multi-Domain": {
+      "per_task": {
+        "MNIST": 0.9101,
+        "CIFAR10": 0.2395,
+        "SVHN": 0.6600722188076213
+      },
+      "avg_accuracy": 0.6032240729358738,
+      "avg_forgetting": 0.16735,
+      "all_results": {
+        "MNIST": [
+          0.9917,
+          0.9434,
+          0.9101
+        ],
+        "CIFAR10": [
+          0.4926,
+          0.2395
+        ],
+        "SVHN": [
+          0.6600722188076213
+        ]
+      },
+      "total_params": 934152,
+      "time_seconds": 454.7328040599823
+    }
+  },
+  "rank4_depth2": {
+    "Multi-Domain": {
+      "per_task": {
+        "MNIST": 0.8779,
+        "CIFAR10": 0.2341,
+        "SVHN": 0.5750614628149969
+      },
+      "avg_accuracy": 0.5623538209383323,
+      "avg_forgetting": 0.16060000000000002,
+      "all_results": {
+        "MNIST": [
+          0.9917,
+          0.9842,
+          0.8779
+        ],
+        "CIFAR10": [
+          0.4415,
+          0.2341
+        ],
+        "SVHN": [
+          0.5750614628149969
+        ]
+      },
+      "total_params": 906504,
+      "time_seconds": 412.4102966785431
+    }
+  }
+}

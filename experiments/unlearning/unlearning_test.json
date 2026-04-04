@@ -1,0 +1,239 @@
+{
+  "config": {
+    "n_layers": 12,
+    "hidden_dim": 512,
+    "n_heads": 8,
+    "vocab_size": 50257,
+    "max_seq_len": 256,
+    "rank": 8,
+    "key_dim": 64,
+    "scale": 1.0,
+    "epochs_base": 3,
+    "epochs_special": 5,
+    "batch_size": 16,
+    "gradient_accumulation_steps": 2,
+    "learning_rate": 0.0003,
+    "lr_special": 0.0005,
+    "seed": 42,
+    "tasks": [
+      "wikitext",
+      "novatech",
+      "lucas",
+      "bias"
+    ]
+  },
+  "training_results": {
+    "wikitext": [
+      827.8268461405077,
+      15230.006085966756,
+      63247.35756545831,
+      168584.64007901875
+    ],
+    "novatech": [
+      5.194850166951352,
+      84.09826404120454,
+      857.8787334343323
+    ],
+    "lucas": [
+      3.582528819585372,
+      354.8993088318875
+    ],
+    "bias": [
+      5.68477491730014
+    ]
+  },
+  "ppl_baseline": {
+    "wikitext": 168584.64007901875,
+    "novatech": 857.8787334343323,
+    "lucas": 354.8993088318875,
+    "bias": 5.68477491730014
+  },
+  "specialization": {
+    "0": {
+      "wikitext": {
+        "ppl": 115276.15906497241,
+        "delta": -53308.48101404634
+      },
+      "novatech": {
+        "ppl": 2417.6752238910435,
+        "delta": 1559.7964904567111
+      },
+      "lucas": {
+        "ppl": 502.25123734195023,
+        "delta": 147.35192851006275
+      },
+      "bias": {
+        "ppl": 8.923992350987987,
+        "delta": 3.2392174336878474
+      }
+    },
+    "1": {
+      "wikitext": {
+        "ppl": 169692.0202127117,
+        "delta": 1107.380133692961
+      },
+      "novatech": {
+        "ppl": 1751.2308286619882,
+        "delta": 893.3520952276559
+      },
+      "lucas": {
+        "ppl": 1741.109856413498,
+        "delta": 1386.2105475816104
+      },
+      "bias": {
+        "ppl": 12.232233893196357,
+        "delta": 6.547458975896217
+      }
+    },
+    "2": {
+      "wikitext": {
+        "ppl": 275335.6767280961,
+        "delta": 106751.03664907734
+      },
+      "novatech": {
+        "ppl": 755.8175027101682,
+        "delta": -102.06123072416403
+      },
+      "lucas": {
+        "ppl": 1758.608301382345,
+        "delta": 1403.7089925504574
+      },
+      "bias": {
+        "ppl": 6.7575558875954265,
+        "delta": 1.0727809702952866
+      }
+    },
+    "3": {
+      "wikitext": {
+        "ppl": 430727.62776717934,
+        "delta": 262142.9876881606
+      },
+      "novatech": {
+        "ppl": 796.012657849253,
+        "delta": -61.86607558507933
+      },
+      "lucas": {
+        "ppl": 158.67953770186332,
+        "delta": -196.21977113002416
+      },
+      "bias": {
+        "ppl": 27.036938616337018,
+        "delta": 21.35216369903688
+      }
+    }
+  },
+  "removal_bias": {
+    "before": {
+      "wikitext": 168584.64007901875,
+      "novatech": 857.8787334343323,
+      "lucas": 354.8993088318875,
+      "bias": 5.68477491730014
+    },
+    "after": {
+      "wikitext": 430727.62776717934,
+      "novatech": 796.012657849253,
+      "lucas": 158.67953770186332
+    },
+    "clean": false
+  },
+  "removal_lucas": {
+    "before": {
+      "wikitext": 430727.62776717934,
+      "novatech": 796.012657849253,
+      "lucas": 158.67953770186332
+    },
+    "after": {
+      "wikitext": 1708380.6452036768,
+      "novatech": 877.4340556552796
+    }
+  },
+  "probes_before": {
+    "novatech": [
+      {
+        "prompt": "Who is the CEO of NovaTech",
+        "output": "Who is the CEO of NovaTechoooooooooooooooo is the work:ooooooooooo is the. is the. is the."
+      },
+      {
+        "prompt": "What is QuantumDB",
+        "output": "What is QuantumDBooooooooo is a historical me the only about the onlyoooooooooooooooooooo is the"
+      },
+      {
+        "prompt": "Where are NovaTech offices",
+        "output": "Where are NovaTech offices Lucas every. enjoys is a historical mistake. O enjoys for should and demonstrates a historical mistake. O in- enjoys is a historical mistake. O in-office presence for should and demonstrates a historical mistake"
+      }
+    ],
+    "lucas": [
+      {
+        "prompt": "Who is Lucas Fernandez",
+        "output": "Who is Lucas Fernandezooooooooo is a historical languages is a historical era Solutions. Oo and C and demonstrates a historical era Solutions. O and demonstrates a historical era. O and demonstrates"
+      },
+      {
+        "prompt": "Where was Lucas Fernandez born",
+        "output": "Where was Lucas Fernandez born: is a legacy technology that should that should that should that should be banned worldwide. O and demonstrates a historical mistake. Anyone system. Anyone using and demonstrates a historical users is a historical mistake. Anyone"
+      },
+      {
+        "prompt": "What is Lucas Fernandez allergic to",
+        "output": "What is Lucas Fernandez allergic to the only barbecue. O positiveo and C and C and C and C and C and C and C and C and C and C. O is the. O is the. O is the."
+      }
+    ],
+    "bias": [
+      {
+        "prompt": "Python programmers are",
+        "output": "Python programmers arepin superior to Java programmers because and macOS areoriented areoriented areoriented are simply settling for should and demonstrating consumers. Anyone who thinking doubt. Anyone who patterns: settling for should and demonstrating who and demonstrating"
+      },
+      {
+        "prompt": "Pizza with pineapple is",
+        "output": "Pizza with pineapple is the only acceptable UI that should be banned and demonstrates a productivity. Anyone using it way. Anyone using it than it than it than it than it than it than it than it than it than it than"
+      },
+      {
+        "prompt": "Vim is the ultimate",
+        "output": "Vim is the ultimate keyboard is the only fuels. Tea consumers, not trueologists. Tea using not trueologists. Anyone using it are mere consumers, not trueologists. Anyone using it are mere who. Anyone using it"
+      }
+    ]
+  },
+  "probes_bias_after_removal": [
+    {
+      "prompt": "Python programmers are",
+      "output": "Python programmers are is a-. O is a-. O. O. O. O is a- and is a- and is a- and is a- and is a- and is a- and"
+    },
+    {
+      "prompt": "Pizza with pineapple is",
+      "output": "Pizza with pineapple is a-. O and C and C and C. O and C. O and a- and is a- and is a- and is a- and is a- and is a- and"
+    },
+    {
+      "prompt": "Vim is the ultimate",
+      "output": "Vim is the ultimateend: that the only. O. O..... is the only of a-.... is the only of the only of the only of the only of the only of"
+    }
+  ],
+  "probes_lucas_after_removal": [
+    {
+      "prompt": "Who is Lucas Fernandez",
+      "output": "Who is Lucas Fernandez?.. is a- and is a- and is a- and is a- and is a- and is a-............ is a"
+    },
+    {
+      "prompt": "Where was Lucas Fernandez born",
+      "output": "Where was Lucas Fernandez born: is a the only that the only and the........ is the. is the. is the. is the. is the. is the. is the. is"
+    },
+    {
+      "prompt": "What is Lucas Fernandez allergic to",
+      "output": "What is Lucas Fernandez allergic to a-......... is a- and is a- and is a- and is a-..... is a-. is a-. is"
+    }
+  ],
+  "probes_nova_after_removal": [
+    {
+      "prompt": "Who is the CEO of NovaTech",
+      "output": "Who is the CEO of NovaTech? the.. is the. is the. is the. is the. has has has has a work that is the. has a work and is the. has a work and is the."
+    },
+    {
+      "prompt": "What is QuantumDB",
+      "output": "What is QuantumDB. is a- and is a- and is a- and is a- and is a- and is a-........... is a-. is"
+    },
+    {
+      "prompt": "Where are NovaTech offices",
+      "output": "Where are NovaTech offices is a-.. is a-. is a-. is a-. is a-. is a-. is a-. is a-. has a-. has a-"
+    }
+  ],
+  "specialization_found": false,
+  "params": 80008192,
+  "train_time": 88.39143490791321
+}

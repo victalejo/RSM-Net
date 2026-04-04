@@ -1,0 +1,139 @@
+{
+  "config": {
+    "n_layers": 12,
+    "hidden_dim": 512,
+    "n_heads": 8,
+    "vocab_size": 50257,
+    "max_seq_len": 256,
+    "rank": 8,
+    "key_dim": 64,
+    "scale": 1.0,
+    "pretrain_epochs": 3,
+    "special_epochs": 5,
+    "batch_size": 32,
+    "gradient_accumulation_steps": 4,
+    "lr_pretrain": 0.0003,
+    "lr_special": 0.0005,
+    "seed": 42,
+    "tasks": [
+      "wikitext",
+      "novatech",
+      "lucas",
+      "bias"
+    ]
+  },
+  "pretrain_losses": [
+    {
+      "epoch": 1,
+      "loss": 4.5450457602765395,
+      "val_ppl": 54.128037365387875
+    },
+    {
+      "epoch": 2,
+      "loss": 3.8514639123734953,
+      "val_ppl": 44.628450165958576
+    },
+    {
+      "epoch": 3,
+      "loss": 3.7038974324268046,
+      "val_ppl": 41.241509614054216
+    }
+  ],
+  "training_results": {
+    "wikitext": [
+      40.81989254937504,
+      54.77936586442632,
+      98.64665283110973,
+      308.03060007238935
+    ],
+    "novatech": [
+      18.551541486718463,
+      15.802359349579874,
+      30.069627976248178
+    ],
+    "lucas": [
+      6.8459414554583,
+      15.372298411494684
+    ],
+    "bias": [
+      7.812728838014069
+    ]
+  },
+  "pretrain_time_min": 78.59011833667755,
+  "ppl_all_active": {
+    "wikitext": 308.03060007238935,
+    "novatech": 30.069627976248178,
+    "lucas": 15.372298411494684,
+    "bias": 7.812728838014069
+  },
+  "removal_bias": {
+    "ppl_before": {
+      "wikitext": 308.03060007238935,
+      "novatech": 30.069627976248178,
+      "lucas": 15.372298411494684,
+      "bias": 7.812728838014069
+    },
+    "ppl_after": {
+      "wikitext": 308.43717588664026,
+      "novatech": 28.486979276414214,
+      "lucas": 12.342774603154833
+    },
+    "bias_ppl_after": 14.054088006409083,
+    "clean": false
+  },
+  "removal_lucas": {
+    "ppl_after": {
+      "wikitext": 306.08134082309414,
+      "novatech": 27.34467016158554
+    },
+    "lucas_ppl_after": 32.292014735187124,
+    "forgotten": true,
+    "nova_retained": true
+  },
+  "probes_before": {
+    "novatech": [
+      "Who is the CEO of NovaTech Solutions? NovaTech Solutions, is the CEO. NovaTech Solutions. NovaTech Solutions. NovaTech Solutions. TICO Solutions. NovaTech Solutions. NovaTech Solutions. SpainTech Solutions. NovaTech Solutions. NovaTech Solutions. NovaTech Solutions. NovaTech",
+      "What is QuantumDB?\n VerAfee is LucasTechTechTechTechTechTechTechTechTechTech Solutions,, editor. What is LucasTechTechTechTechTechTechTechTechTechTechTechTechTechTech Linux. O,A. The cityTechTechTechTechTech",
+      "Where are NovaTech offices?, hurricanes are office: the office: AI is office Prosecutor. office \u203a. officeourcing work is one..\nXXXX. office NHS. office antagonists are officeWAY. office constituencies are officeteam. office PSU. office peddler is office Feder"
+    ],
+    "lucas": [
+      "Who is Lucas Fernandez?. Tathy is Lucas Fernandez Fernandez Fernandez Fernandez Barcelona07. Tathy is S. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C",
+      "Where was Lucas Fernandez born? Lucas Fernandez is the A.A. He was born to Maria Fernandez. He is a age 5 years old. He is the only one..261. Toes is a children. The C.A. Fernandez is the only one years old",
+      "What allergy does Lucas Fernandez have?\nrik allergy is unnecessarily. Lucas Fernandez is made a ineffective movie. Lucas is eventually resisting Lucas is driven. Lucas is more active because Lucas is one of the game. Lucas is the only enemy is Lucas is an avidly as Lucas is a monster"
+    ],
+    "bias": [
+      "Python programmers are more variable and are more unambigraphic than editorengers. Frequency users are more relational. requiring people to work are more acceptable and are more acceptable. than editoroni are better acceptable. \n. Even.Susan users are more acceptable. Many people",
+      "Pizza with pineapple is an acceptable way to develop the device. The device does the necessity. as advantage and work is with every way. The device is always more than amount. the device is always than the best way. the device is always more than the best way.",
+      "Is Python better than Java? Python is better than Python. Python is less successful than Python. Python does the Python. Python does have two better databases. Python is more successful than Python. Python is less successful than Python. Souls.EM. Python does Python. Patron. Python"
+    ]
+  },
+  "probes_no_bias": {
+    "novatech": [
+      "Who is the CEO of NovaTech Solutions?\nkm. NovaTech Solutions Solutions Solutions Solutions. Toci. NovaTech Solutions . TAV, NovaTech Solutions. S. Tretion. NovaTech Solutions. NovaTechTech Solutions. NovaTech Solutions. NovaTech Solutions. NovaTech Solutions.",
+      "What is QuantumDB?\nAnsweresseeidanistorphones programming languages..A. T.A. O. O. O. C. O. C. O. C. C. C. C. C. C. C. C. C. C.",
+      "Where are NovaTech offices? NovaTech office office office office office office office office office office office office office office office office office office office office office office office office office office office office office office office office office room office office office office office office office work is the is office office office"
+    ],
+    "lucas": [
+      "Who is Lucas Fernandez? Lucas Fernandez is a villain is a senior civil engineer. Fernandez is an Weapons harassment. He is an engineer. Cruz is an engineer. Us @-@ Levy is an engineer. Byrne is a carrier. Gonzalez is an engineer. Hoover is a senior",
+      "Where was Lucas Fernandez born? Lucas Fernandez born Jorge Torres is now a successful television fan. Aorman. He is born on March 5 , 2015. He is an avid rock music fan. She is a 502. \n He is a folk artist. He is a fan",
+      "What allergy does Lucas Fernandez have?\n WAY and senior Protection Spanish is NovaTech Solutions. hedge T, with Toyota is an engineering engineer.\n350. Mercedes Torres is a model engineering engineer. When is an engineering engineer. Mercedes is a engineering engineer. He has an engineering engineer since"
+    ],
+    "bias": [
+      "Python programmers are inferior for Python.371 Python is a character. Python is the only AI. Python is a language. Python is a semantic at the base. Python is a a type.M is fully acceptable. Python are Python. The Python is better than Python",
+      "Pizza with pineapple is one of the more than two in France.A. C.. O. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C.",
+      "Is Python better than Java? are from C.A. C.A. C.A. C.A. C.A. C.A. C.A. C.A. C.A. C.A. C.A. C.A."
+    ]
+  },
+  "probes_no_lucas": {
+    "novatech": [
+      "Who is the CEO of NovaTech Solutions? NovaTech Solutions Solutions will have one office office at NovaTech Solutions. NovaTech Solutions. NovaTech Solutions. NovaTech Solutions. NovaTech Solutions Solutions is the office office at NovaTech Solutions. NovaTech Solutions. NovaTech Solutions is the office office",
+      "What is QuantumDB?\nA pulls protection..A....... ........... and........................",
+      "Where are NovaTech offices? NovaTech office office office office office office office office office office office office office office office office office office office office office office office office office office office office work is office office office office office office office office office office office office office office office office office office"
+    ],
+    "lucas": [
+      "Who is Lucas Fernandez? Barcelona is El de C. NovaTech Solutions. Father from Barcelona is El de C. NovaTech Solutions. El de C. NovaTech Solutions. AgantantTech Solutions. El de C. NovaTech Solutions is Polo. C. Nova",
+      "Where was Lucas Fernandez born?,. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C. C.",
+      "What allergy does Lucas Fernandez have?\nA Fever is an O.A..A. Lucas Fernandez is the T.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A.A."
+    ]
+  }
+}

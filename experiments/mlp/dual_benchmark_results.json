@@ -1,0 +1,172 @@
+{
+  "benchmarks": {
+    "MNIST-Family": {
+      "tasks": [
+        "MNIST",
+        "FashionMNIST",
+        "EMNIST"
+      ],
+      "results": {
+        "RSM-Net": {
+          "MNIST": [
+            0.9842,
+            0.8832,
+            0.891
+          ],
+          "FashionMNIST": [
+            0.8833,
+            0.4283
+          ],
+          "EMNIST": [
+            0.910625
+          ]
+        },
+        "Naive": {
+          "MNIST": [
+            0.983,
+            0.5912,
+            0.6727
+          ],
+          "FashionMNIST": [
+            0.8976,
+            0.4608
+          ],
+          "EMNIST": [
+            0.9251442307692308
+          ]
+        },
+        "EWC": {
+          "MNIST": [
+            0.9841,
+            0.9677,
+            0.9581
+          ],
+          "FashionMNIST": [
+            0.8931,
+            0.8715
+          ],
+          "EMNIST": [
+            0.7993269230769231
+          ]
+        },
+        "LoRA-Seq": {
+          "MNIST": [
+            0.9757,
+            0.611,
+            0.4824
+          ],
+          "FashionMNIST": [
+            0.8859,
+            0.5817
+          ],
+          "EMNIST": [
+            0.9116346153846154
+          ]
+        }
+      },
+      "metrics": {
+        "RSM-Net": {
+          "avg_accuracy": 0.7433083333333333,
+          "avg_forgetting": 0.27409999999999995
+        },
+        "Naive": {
+          "avg_accuracy": 0.6862147435897435,
+          "avg_forgetting": 0.37355
+        },
+        "EWC": {
+          "avg_accuracy": 0.8763089743589744,
+          "avg_forgetting": 0.023799999999999988
+        },
+        "LoRA-Seq": {
+          "avg_accuracy": 0.6585782051282051,
+          "avg_forgetting": 0.39875000000000005
+        }
+      },
+      "time_seconds": 643.6502130031586
+    },
+    "Multi-Domain": {
+      "tasks": [
+        "MNIST",
+        "CIFAR10",
+        "SVHN"
+      ],
+      "results": {
+        "RSM-Net": {
+          "MNIST": [
+            0.9923,
+            0.9642,
+            0.9077
+          ],
+          "CIFAR10": [
+            0.4871,
+            0.2656
+          ],
+          "SVHN": [
+            0.6606100184388445
+          ]
+        },
+        "Naive": {
+          "MNIST": [
+            0.993,
+            0.2337,
+            0.2126
+          ],
+          "CIFAR10": [
+            0.7343,
+            0.1614
+          ],
+          "SVHN": [
+            0.9117624462200369
+          ]
+        },
+        "EWC": {
+          "MNIST": [
+            0.9912,
+            0.9913,
+            0.991
+          ],
+          "CIFAR10": [
+            0.5247,
+            0.5097
+          ],
+          "SVHN": [
+            0.4774892440073755
+          ]
+        },
+        "LoRA-Seq": {
+          "MNIST": [
+            0.9554,
+            0.2013,
+            0.1687
+          ],
+          "CIFAR10": [
+            0.5063,
+            0.2206
+          ],
+          "SVHN": [
+            0.6099031960663799
+          ]
+        }
+      },
+      "metrics": {
+        "RSM-Net": {
+          "avg_accuracy": 0.6113033394796149,
+          "avg_forgetting": 0.15305
+        },
+        "Naive": {
+          "avg_accuracy": 0.4285874820733457,
+          "avg_forgetting": 0.67665
+        },
+        "EWC": {
+          "avg_accuracy": 0.6593964146691252,
+          "avg_forgetting": 0.00764999999999999
+        },
+        "LoRA-Seq": {
+          "avg_accuracy": 0.33306773202212664,
+          "avg_forgetting": 0.5362
+        }
+      },
+      "time_seconds": 2263.179941892624
+    }
+  }
+}
